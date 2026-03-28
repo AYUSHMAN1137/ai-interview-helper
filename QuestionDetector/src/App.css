@@ -1,0 +1,32 @@
+/* App-level layout styles */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: var(--bg-main);
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.panels-container {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel-divider {
+  width: 1px;
+  background: var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.drag-handle {
+  -webkit-app-region: drag;
+  height: 4px;
+  width: 100%;
+  cursor: move;
+  flex-shrink: 0;
+}

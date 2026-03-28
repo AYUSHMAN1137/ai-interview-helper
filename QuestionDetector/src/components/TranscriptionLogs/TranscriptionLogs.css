@@ -1,0 +1,52 @@
+.transcription-logs {
+  height: 18%;
+  min-height: 60px;
+  max-height: 120px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.transcription-header {
+  padding: 4px 12px;
+  font-size: var(--font-size-small);
+  color: var(--text-secondary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.transcription-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 12px;
+  min-height: 0;
+}
+
+.log-entry {
+  display: flex;
+  gap: 6px;
+  padding: 1px 0;
+  font-size: var(--font-size-small);
+  line-height: 1.4;
+}
+
+.log-speaker {
+  font-weight: 600;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.log-entry--candidate .log-speaker {
+  color: var(--text-blue);
+}
+
+.log-entry--interviewer .log-speaker {
+  color: var(--text-green);
+}
+
+.log-text {
+  color: var(--text-primary);
+  word-break: break-word;
+}

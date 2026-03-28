@@ -1,0 +1,25 @@
+// IPC channel type definitions
+export type IpcChannelsMainToRenderer =
+  | 'new-question'
+  | 'answer-stream-chunk'
+  | 'transcript-entry'
+  | 'usage-update'
+  | 'scanning-status'
+  | 'hotkey-mic-toggle'
+  | 'hotkey-speaker-toggle'
+  | 'hotkey-screenshot'
+  | 'hotkey-clipboard'
+  | 'hotkey-refresh'
+
+export type IpcChannelsRendererToMain =
+  | 'toggle-mic'
+  | 'toggle-speaker'
+  | 'trigger-screenshot'
+  | 'trigger-clipboard'
+  | 'refresh-session'
+  | 'save-settings'
+  | 'load-settings'
+  | 'get-usage'
+  | 'minimize-window'
+  | 'close-window'
+  | 'add-clipboard-question'

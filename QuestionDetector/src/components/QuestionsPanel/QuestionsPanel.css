@@ -1,0 +1,85 @@
+.questions-panel {
+  width: 38%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border-panel);
+  min-width: 0;
+}
+
+.panel-header {
+  padding: 8px 12px 6px;
+  font-size: var(--font-size-label);
+  color: #2dd4bf;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.questions-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+  min-height: 0;
+}
+
+.placeholder-text {
+  color: var(--text-secondary);
+  font-size: var(--font-size-small);
+  text-align: center;
+  padding: 20px 12px;
+  font-style: italic;
+}
+
+/* Question Item */
+.question-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 10px;
+  margin: 2px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+}
+
+.question-item:hover {
+  background: var(--bg-question-hover);
+}
+
+.question-item--selected {
+  background: var(--bg-question-selected);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.question-number {
+  color: var(--text-blue);
+  font-weight: 600;
+  font-size: var(--font-size-small);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.question-text {
+  font-size: var(--font-size-small);
+  color: var(--text-primary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.streaming-dot {
+  color: var(--text-green);
+  font-size: 8px;
+  animation: pulse 1s infinite;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* (Selected Question styles moved to AnswerPanel.css) */

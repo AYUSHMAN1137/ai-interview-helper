@@ -1,0 +1,76 @@
+{
+  "name": "question-detector",
+  "version": "1.0.0",
+  "description": "AI Interview Helper - Chrome Background Services",
+  "main": "electron-main.js",
+  "scripts": {
+    "dev": "tsc -p tsconfig.electron.json && concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
+    "build": "tsc && vite build && tsc -p tsconfig.electron.json",
+    "build:electron": "npm run build && electron-builder",
+    "preview": "vite preview",
+    "dist": "npm run build && electron-builder --win"
+  },
+  "build": {
+    "appId": "com.chromebg.services",
+    "productName": "Chrome Background Services",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": false
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "assets/**/*"
+    ]
+  },
+  "dependencies": {
+    "@deepgram/sdk": "^3.9.0",
+    "electron-store": "^8.2.0",
+    "koffi": "^2.15.1",
+    "openai": "^4.73.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
+    "react-syntax-highlighter": "^15.6.1",
+    "remark-gfm": "^4.0.0",
+    "screenshot-desktop": "^1.15.0",
+    "sharp": "^0.33.5",
+    "tesseract.js": "^5.1.1",
+    "uuid": "^9.0.1",
+    "zustand": "^4.5.5"
+  },
+  "optionalDependencies": {
+    "ffi-napi": "^4.0.3",
+    "naudiodon": "^2.3.5",
+    "node-record-lpcm16": "^1.0.1",
+    "ref-napi": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/babel__core": "^7.20.5",
+    "@types/node": "^20.17.6",
+    "@types/prop-types": "^15.7.15",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "@types/uuid": "^9.0.8",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^8.2.2",
+    "cross-env": "^10.1.0",
+    "electron": "^33.4.11",
+    "electron-builder": "^24.13.3",
+    "esbuild": "^0.27.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "wait-on": "^7.2.0"
+  }
+}

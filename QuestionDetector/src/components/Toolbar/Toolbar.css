@@ -1,0 +1,114 @@
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-toolbar);
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 4px;
+}
+
+.toolbar-row-1 {
+  height: 32px;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.toolbar-row-2 {
+  height: 38px;
+  justify-content: flex-end;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.toolbar-row-2-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detecting-text {
+  color: var(--text-green);
+  font-size: var(--font-size-small);
+  animation: pulse 1.5s infinite;
+  white-space: nowrap;
+}
+
+/* Toggle button styles (Mic/Speaker) */
+.toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: var(--font-size-base);
+  font-family: var(--font-main);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.toggle-btn--on {
+  color: var(--text-green);
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.toggle-btn--off {
+  color: #fff;
+  background: rgba(239, 68, 68, 0.6);
+  border-color: rgba(239, 68, 68, 0.7);
+}
+
+.toggle-btn--off:hover {
+  background: rgba(239, 68, 68, 0.75);
+}
+
+/* Larger buttons for row 2 */
+.btn-large {
+  padding: 6px 14px;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+}
+
+.btn-exit {
+  color: #fff;
+  background: rgba(239, 68, 68, 0.6);
+  border-color: rgba(239, 68, 68, 0.7);
+}
+
+.btn-exit:hover {
+  background: rgba(239, 68, 68, 0.75);
+}
