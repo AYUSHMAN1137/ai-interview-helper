@@ -21,7 +21,14 @@
 
 .toolbar-row-2 {
   height: 38px;
-  justify-content: flex-end;
+  justify-content: space-between;
+}
+
+.toolbar-row-2-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
 }
 
 .toolbar-left {
@@ -112,3 +119,86 @@
 .btn-exit:hover {
   background: rgba(239, 68, 68, 0.75);
 }
+
+/* Opacity Controller Bar */
+.opacity-controller-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 3px 8px;
+  user-select: none;
+}
+
+.opacity-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.opacity-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-blue);
+  box-shadow: 0 0 6px var(--text-blue);
+}
+
+.opacity-val {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  min-width: 32px;
+}
+
+.opacity-steppers {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.opacity-step-btn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  transition: all 0.1s ease;
+}
+
+.opacity-step-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.opacity-instruction {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.opacity-kbd {
+  display: inline-block;
+  padding: 1px 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+

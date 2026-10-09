@@ -1,6 +1,7 @@
 import { globalShortcut, BrowserWindow } from 'electron'
 import { AudioCaptureService } from './audioCapture'
 import { STTEngine } from './sttEngine'
+import { StorageManager } from './storageManager'
 
 /**
  * Register global hotkeys:
@@ -10,13 +11,50 @@ import { STTEngine } from './sttEngine'
  * Ctrl+Shift+C — Clipboard question
  * Ctrl+Shift+R — Refresh/clear session
  * Ctrl+Shift+H — Hide/show window
+ * Ctrl+Up      — Increase Window Opacity
+ * Ctrl+Down    — Decrease Window Opacity
  */
 export function registerHotkeys(
   win: BrowserWindow,
   audioCapture: AudioCaptureService,
   sttEngine: STTEngine,
+  storage?: StorageManager,
 ) {
   let micActive = false
+  let currentOpacity = 0.88
+
+  if (storage) {
+    storage.loadSettings().then(s => {
+      if (s && typeof s.windowOpacity === 'number') {
+        currentOpacity = s.windowOpacity
+      }
+    }).catch(() => {})
+  }
+
+  const changeOpacity = async (delta: number) => {
+    currentOpacity = Math.min(1.0, Math.max(0.20, Math.round((currentOpacity + delta) * 100) / 100))
+    try {
+      if (win && !win.isDestroyed()) {
+        win.setOpacity(currentOpacity)
+        win.webContents.send('opacity-change', { opacity: currentOpacity })
+      }
+      if (storage) {
+        await storage.saveSettings({ windowOpacity: currentOpacity })
+      }
+      console.log(`Window opacity adjusted: ${Math.round(currentOpacity * 100)}%`)
+    } catch (err) {
+      console.error('Error adjusting window opacity:', err)
+    }
+  }
+
+  // Opacity Controls: Ctrl+Up and Ctrl+Down
+  globalShortcut.register('Control+Up', () => {
+    changeOpacity(0.05)
+  })
+
+  globalShortcut.register('Control+Down', () => {
+    changeOpacity(-0.05)
+  })
 
   // Toggle Mic
   globalShortcut.register('Control+Shift+M', async () => {

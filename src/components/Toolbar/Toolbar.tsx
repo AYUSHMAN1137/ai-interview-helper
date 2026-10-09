@@ -13,6 +13,8 @@ const Toolbar: React.FC = () => {
     refreshSession,
     isDetectingQuestions,
     scanningMessage,
+    opacity,
+    setOpacity,
   } = useStore()
 
   const handleClipboard = async () => {
@@ -25,6 +27,22 @@ const Toolbar: React.FC = () => {
     refreshSession()
     if (window.electronAPI) {
       window.electronAPI.refreshSession()
+    }
+  }
+
+  const handleIncreaseOpacity = async () => {
+    const newOp = Math.min(1.0, Math.round((opacity + 0.05) * 100) / 100)
+    setOpacity(newOp)
+    if (window.electronAPI) {
+      await window.electronAPI.setOpacity(newOp)
+    }
+  }
+
+  const handleDecreaseOpacity = async () => {
+    const newOp = Math.max(0.20, Math.round((opacity - 0.05) * 100) / 100)
+    setOpacity(newOp)
+    if (window.electronAPI) {
+      await window.electronAPI.setOpacity(newOp)
     }
   }
 
@@ -67,8 +85,23 @@ const Toolbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Row 2: audio controls + window controls (larger buttons) */}
+      {/* Row 2: opacity hint (left) + audio controls & window controls (right) */}
       <div className="toolbar-row toolbar-row-2">
+        <div className="toolbar-row-2-left">
+          <div className="opacity-controller-bar" title="Press Ctrl+Up to increase, Ctrl+Down to decrease opacity">
+            <span className="opacity-badge">
+              <span className="opacity-dot" />
+              <span className="opacity-val">{Math.round(opacity * 100)}%</span>
+            </span>
+            <div className="opacity-steppers">
+              <button className="opacity-step-btn" onClick={handleDecreaseOpacity} title="Decrease Opacity (Ctrl+↓)">−</button>
+              <button className="opacity-step-btn" onClick={handleIncreaseOpacity} title="Increase Opacity (Ctrl+↑)">+</button>
+            </div>
+            <span className="opacity-instruction">
+              To control opacity, press <kbd className="opacity-kbd">Ctrl+↑</kbd> / <kbd className="opacity-kbd">Ctrl+↓</kbd>
+            </span>
+          </div>
+        </div>
         <div className="toolbar-row-2-right">
           <MicButton />
           <SpeakerButton />

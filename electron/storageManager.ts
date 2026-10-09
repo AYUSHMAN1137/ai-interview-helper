@@ -11,6 +11,7 @@ interface Settings {
   resume: string
   openaiApiKey: string
   deepgramApiKey: string
+  model: string
   language: string
   windowOpacity: number
   windowBounds: { x: number; y: number; width: number; height: number }
@@ -22,6 +23,7 @@ const DEFAULT_SETTINGS: Settings = {
   resume: '',
   openaiApiKey: '',
   deepgramApiKey: '',
+  model: 'openai/gpt-oss-120b',
   language: 'en',
   windowOpacity: 0.88,
   windowBounds: { x: 100, y: 100, width: 900, height: 600 },

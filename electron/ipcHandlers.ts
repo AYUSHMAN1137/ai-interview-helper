@@ -148,7 +148,24 @@ export function registerIpcHandlers(
     if (settings.deepgramApiKey) {
       sttEngine.updateApiKey(settings.deepgramApiKey)
     }
+    if (settings.model) {
+      llmEngine.updateModel(settings.model)
+      screenshotService.updateModel(settings.model)
+    }
+    if (typeof settings.windowOpacity === 'number') {
+      const val = Math.min(1.0, Math.max(0.20, settings.windowOpacity))
+      win.setOpacity(val)
+      win.webContents.send('opacity-change', { opacity: val })
+    }
     return { success: true }
+  })
+
+  ipcMain.handle('set-opacity', async (_event, { opacity }) => {
+    const val = Math.min(1.0, Math.max(0.20, Number(opacity)))
+    win.setOpacity(val)
+    await storage.saveSettings({ windowOpacity: val })
+    win.webContents.send('opacity-change', { opacity: val })
+    return { success: true, opacity: val }
   })
 
   ipcMain.handle('load-settings', async () => {

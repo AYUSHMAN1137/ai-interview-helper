@@ -17,6 +17,9 @@ export function useMicCapture() {
 
       // Create AudioContext at 16kHz for Deepgram
       const context = new AudioContext({ sampleRate: 16000 })
+      if (context.state === 'suspended') {
+        await context.resume()
+      }
       contextRef.current = context
 
       const source = context.createMediaStreamSource(stream)
@@ -24,6 +27,10 @@ export function useMicCapture() {
       // ScriptProcessor for capturing raw PCM (bufferSize = 4096)
       const processor = context.createScriptProcessor(4096, 1, 1)
       processorRef.current = processor
+
+      // Mute gain node so microphone doesn't echo into speakers and cause Windows driver clamp
+      const muteGain = context.createGain()
+      muteGain.gain.value = 0
 
       processor.onaudioprocess = (e) => {
         const float32 = e.inputBuffer.getChannelData(0)
@@ -40,8 +47,9 @@ export function useMicCapture() {
       }
 
       source.connect(processor)
-      processor.connect(context.destination)
-      console.log('Web Audio mic capture started (16kHz)')
+      processor.connect(muteGain)
+      muteGain.connect(context.destination)
+      console.log('Web Audio mic capture started (16kHz, feedback isolated)')
     } catch (err) {
       console.error('Mic capture failed:', err)
     }

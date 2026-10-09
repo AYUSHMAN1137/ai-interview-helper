@@ -30,9 +30,11 @@ Respond with ONLY the extracted question/task, nothing else. Do not add "?" if n
  */
 export class ScreenshotService {
   private openaiKey: string
+  private model: string
 
-  constructor(openaiKey: string) {
+  constructor(openaiKey: string, model: string = 'openai/gpt-oss-120b') {
     this.openaiKey = openaiKey
+    this.model = model || 'openai/gpt-oss-120b'
   }
 
   async captureAndOCR(): Promise<string> {
@@ -100,7 +102,7 @@ export class ScreenshotService {
       const truncatedOcr = ocrText.length > 2000 ? ocrText.substring(0, 2000) + '...' : ocrText
 
       const response = await openai.chat.completions.create({
-        model: 'openai/gpt-oss-safeguard-20b',
+        model: this.model,
         messages: [{
           role: 'user',
           content: QUESTION_EXTRACTION_PROMPT.replace('{OCR_TEXT}', truncatedOcr),
@@ -150,5 +152,11 @@ export class ScreenshotService {
 
   updateApiKey(key: string): void {
     this.openaiKey = key
+  }
+
+  updateModel(model: string): void {
+    if (model) {
+      this.model = model
+    }
   }
 }

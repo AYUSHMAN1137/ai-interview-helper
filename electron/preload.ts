@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   closeWindow: () => ipcRenderer.invoke('close-window'),
   addClipboardQuestion: (text: string) => ipcRenderer.invoke('add-clipboard-question', { text }),
+  setOpacity: (opacity: number) => ipcRenderer.invoke('set-opacity', { opacity }),
 
   // Mic audio chunk (renderer → main, Web Audio API)
   sendMicAudio: (buffer: ArrayBuffer) => ipcRenderer.send('mic-audio-chunk', Buffer.from(buffer)),
@@ -53,6 +54,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   onStopMicCapture: (cb: () => void) => {
     ipcRenderer.on('stop-mic-capture', () => cb())
+  },
+  onOpacityChange: (cb: (data: { opacity: number }) => void) => {
+    ipcRenderer.on('opacity-change', (_event, data) => cb(data))
   },
 
   // Cleanup

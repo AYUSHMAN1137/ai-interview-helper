@@ -26,6 +26,8 @@ const App: React.FC = () => {
     setResume,
     setOpenaiApiKey,
     setDeepgramApiKey,
+    setModel,
+    setOpacity,
     refreshSession,
   } = useStore()
 
@@ -38,6 +40,8 @@ const App: React.FC = () => {
         if (settings.resume) setResume(settings.resume)
         if (settings.openaiApiKey) setOpenaiApiKey(settings.openaiApiKey)
         if (settings.deepgramApiKey) setDeepgramApiKey(settings.deepgramApiKey)
+        if (settings.model) setModel(settings.model)
+        if (typeof settings.windowOpacity === 'number') setOpacity(settings.windowOpacity)
       }
     }).catch(() => {})
 
@@ -96,6 +100,31 @@ const App: React.FC = () => {
       }
     })
 
+    // Listen for opacity updates
+    window.electronAPI.onOpacityChange((data: { opacity: number }) => {
+      if (typeof data.opacity === 'number') {
+        setOpacity(data.opacity)
+      }
+    })
+
+    // Local keydown for Ctrl+ArrowUp and Ctrl+ArrowDown
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'Up')) {
+        e.preventDefault()
+        const current = useStore.getState().opacity
+        const newOp = Math.min(1.0, Math.round((current + 0.05) * 100) / 100)
+        setOpacity(newOp)
+        window.electronAPI.setOpacity(newOp)
+      } else if (e.ctrlKey && (e.key === 'ArrowDown' || e.key === 'Down')) {
+        e.preventDefault()
+        const current = useStore.getState().opacity
+        const newOp = Math.max(0.20, Math.round((current - 0.05) * 100) / 100)
+        setOpacity(newOp)
+        window.electronAPI.setOpacity(newOp)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
     // Listen for hotkey events from main process
     window.electronAPI.onHotkeyMicToggle((data: any) => {
       setMicOn(data.on)
@@ -115,12 +144,14 @@ const App: React.FC = () => {
     })
 
     return () => {
+      window.removeEventListener('keydown', handleKeyDown)
       if (window.electronAPI) {
         window.electronAPI.removeAllListeners('new-question')
         window.electronAPI.removeAllListeners('answer-stream-chunk')
         window.electronAPI.removeAllListeners('transcript-entry')
         window.electronAPI.removeAllListeners('usage-update')
         window.electronAPI.removeAllListeners('scanning-status')
+        window.electronAPI.removeAllListeners('opacity-change')
         window.electronAPI.removeAllListeners('hotkey-mic-toggle')
         window.electronAPI.removeAllListeners('hotkey-speaker-toggle')
         window.electronAPI.removeAllListeners('hotkey-screenshot')

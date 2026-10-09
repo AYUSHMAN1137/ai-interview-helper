@@ -24,6 +24,8 @@ interface AppState {
   resume: string
   openaiApiKey: string
   deepgramApiKey: string
+  model: string
+  opacity: number
 
   // Usage
   usageMinutes: number
@@ -45,6 +47,8 @@ interface AppState {
   setResume: (resume: string) => void
   setOpenaiApiKey: (key: string) => void
   setDeepgramApiKey: (key: string) => void
+  setModel: (model: string) => void
+  setOpacity: (opacity: number) => void
   refreshSession: () => void
   updateUsage: (usedMinutes: number, formatted: string) => void
 }
@@ -64,6 +68,8 @@ export const useStore = create<AppState>((set, get) => ({
   resume: '',
   openaiApiKey: '',
   deepgramApiKey: '',
+  model: 'openai/gpt-oss-120b',
+  opacity: 0.88,
   usageMinutes: 0,
   formattedUsage: '0h 0m',
 
@@ -104,6 +110,8 @@ export const useStore = create<AppState>((set, get) => ({
   setResume: (resume) => set({ resume }),
   setOpenaiApiKey: (key) => set({ openaiApiKey: key }),
   setDeepgramApiKey: (key) => set({ deepgramApiKey: key }),
+  setModel: (model) => set({ model }),
+  setOpacity: (opacity) => set({ opacity }),
 
   refreshSession: () =>
     set({

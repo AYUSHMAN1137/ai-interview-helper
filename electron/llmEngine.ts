@@ -22,10 +22,12 @@ Rules:
 export class LLMEngine {
   private openai: any = null
   private resume: string
+  private model: string
   private conversationHistory: { role: 'user' | 'assistant'; content: string }[] = []
 
-  constructor(apiKey: string, resume: string) {
+  constructor(apiKey: string, resume: string, model: string = 'openai/gpt-oss-120b') {
     this.resume = resume
+    this.model = model || 'openai/gpt-oss-120b'
     this.initClient(apiKey)
   }
 
@@ -61,7 +63,7 @@ export class LLMEngine {
     const systemPrompt = this.buildSystemPrompt()
 
     const stream = await this.openai.chat.completions.create({
-      model: 'openai/gpt-oss-safeguard-20b',
+      model: this.model,
       stream: true,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -105,6 +107,12 @@ export class LLMEngine {
 
   updateResume(resume: string): void {
     this.resume = resume
+  }
+
+  updateModel(model: string): void {
+    if (model) {
+      this.model = model
+    }
   }
 
   updateApiKey(apiKey: string): void {

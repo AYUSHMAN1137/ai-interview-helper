@@ -97,8 +97,10 @@ async function initializeServices() {
   const openaiKey = settings.openaiApiKey || process.env.GROQ_API_KEY || ''
   const deepgramKey = settings.deepgramApiKey || process.env.DEEPGRAM_API_KEY || ''
 
-  llmEngine = new LLMEngine(openaiKey, settings.resume || '')
-  screenshotService = new ScreenshotService(openaiKey)
+  const model = settings.model || 'openai/gpt-oss-120b'
+
+  llmEngine = new LLMEngine(openaiKey, settings.resume || '', model)
+  screenshotService = new ScreenshotService(openaiKey, model)
   questionDetector = new QuestionDetector()
   usageTracker = new UsageTracker(storageManager)
   sttEngine = new STTEngine(deepgramKey)
@@ -190,6 +192,13 @@ app.whenReady().then(async () => {
 
   mainWindow = createMainWindow()
 
+  // Apply initial saved opacity
+  if (storageManager) {
+    const settings = await storageManager.loadSettings()
+    const initialOpacity = typeof settings.windowOpacity === 'number' ? settings.windowOpacity : 0.88
+    mainWindow.setOpacity(initialOpacity)
+  }
+
   // Load the renderer
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
@@ -225,7 +234,7 @@ app.whenReady().then(async () => {
   )
 
   // Register global hotkeys
-  registerHotkeys(mainWindow, audioCaptureService!, sttEngine!)
+  registerHotkeys(mainWindow, audioCaptureService!, sttEngine!, storageManager!)
 
   // Wire usage tracker to window for IPC updates
   usageTracker!.setMainWindow(mainWindow)

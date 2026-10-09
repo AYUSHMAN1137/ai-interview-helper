@@ -14,6 +14,7 @@ interface ElectronAPI {
   minimizeWindow: () => void
   closeWindow: () => void
   addClipboardQuestion: (text: string) => Promise<{ success: boolean }>
+  setOpacity: (opacity: number) => Promise<{ success: boolean; opacity?: number }>
   
   sendMicAudio: (buffer: ArrayBuffer) => void
   onStartMicCapture: (cb: () => void) => void
@@ -24,6 +25,7 @@ interface ElectronAPI {
   onTranscriptEntry: (cb: (data: any) => void) => void
   onUsageUpdate: (cb: (data: any) => void) => void
   onScanningStatus: (cb: (data: any) => void) => void
+  onOpacityChange: (cb: (data: { opacity: number }) => void) => void
   onHotkeyMicToggle: (cb: (data: any) => void) => void
   onHotkeySpeakerToggle: (cb: (data: any) => void) => void
   onHotkeyScreenshot: (cb: () => void) => void
