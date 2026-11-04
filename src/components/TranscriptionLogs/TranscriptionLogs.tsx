@@ -14,9 +14,25 @@ const TranscriptionLogs: React.FC = () => {
     }
   }, [transcriptEntries])
 
+  const handleSendLast = async () => {
+    if (window.electronAPI) {
+      await window.electronAPI.triggerSendLastTranscript()
+    }
+  }
+
   return (
     <div className="transcription-logs">
-      <div className="transcription-header">Transcription Logs</div>
+      <div className="transcription-header-row">
+        <span className="transcription-header-title">Transcription Logs</span>
+        <button
+          className="btn-send-last-transcript"
+          onClick={handleSendLast}
+          title="Send the last transcribed speech as a question to generate answers (Shortcut: Alt+Enter)"
+        >
+          <span>Ask Last</span>
+          <kbd className="btn-shortcut">Alt+Enter</kbd>
+        </button>
+      </div>
       <div className="transcription-content" ref={scrollRef}>
         {transcriptEntries.length === 0 ? (
           <div className="placeholder-text">

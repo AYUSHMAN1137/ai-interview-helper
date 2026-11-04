@@ -314,9 +314,10 @@ overlay an owned child of a hidden 0×0 parent, since owned windows never get ta
 | # | Issue | Status |
 |---|---|---|
 | 1 | **Taskbar icon still visible** | 🔴 **OPEN** — v1 + v2 failed. v3 designed, **not applied**. Diagnostic never run live. |
-| 2 | **Duplicate questions** | 🟡 Discussed, not implemented — see below |
-| 3 | Screenshot question extraction | ⚪ Not started — user asked for it |
-| 4 | Deferred improvements from `improvement_plan` artifact | ⚪ Not started |
+| 2 | Candidate mic readback question loop (Feature 3) | 🟡 Deferred by user — to be tackled next |
+| 3 | Duplicate questions & multi-chunk stitching | ✅ Completed & verified |
+| 4 | Screenshot question extraction | ⚪ Not started — user asked for it |
+| 5 | Deferred improvements from `improvement_plan` artifact | ⚪ Not started |
 
 ### Issue 2 — Duplicate question detection (discussed, not built)
 
@@ -366,5 +367,6 @@ Target: < 1 ms, no network, no new dependency. Must live in `questionDetector.ts
 | Docs index + architecture | [`docs/README.md`](../../../../../Desktop/ai-interview-helper/docs/README.md) |
 | Taskbar diagnostic | [`tools/check-taskbar.ps1`](../../../../../Desktop/ai-interview-helper/tools/check-taskbar.ps1) |
 | Model tiers | [`electron/modelStrategy.ts`](../../../../../Desktop/ai-interview-helper/electron/modelStrategy.ts) |
-| Answer streaming | [`electron/llmEngine.ts`](../../../../../Desktop/ai-interview-helper/electron/llmEngine.ts) |
+| Answer streaming (dual simple + contextual) | [`electron/llmEngine.ts`](../../../../../Desktop/ai-interview-helper/electron/llmEngine.ts) |
+| Dual answers & session history | [`docs/DUAL_ANSWERS_AND_HISTORY.md`](../../../../../Desktop/ai-interview-helper/docs/DUAL_ANSWERS_AND_HISTORY.md) |
 | Window hiding | [`electron/windowManager.ts`](../../../../../Desktop/ai-interview-helper/electron/windowManager.ts) |

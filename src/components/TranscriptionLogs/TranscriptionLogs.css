@@ -8,13 +8,42 @@
   flex-shrink: 0;
 }
 
-.transcription-header {
-  padding: 4px 12px;
+.transcription-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.transcription-header-title {
   font-size: var(--font-size-small);
   color: var(--text-secondary);
   font-weight: 600;
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-send-last-transcript {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 3px;
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 7px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+.btn-send-last-transcript:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.55);
+  color: #ffffff;
 }
 
 .transcription-content {
@@ -48,5 +77,4 @@
 
 .log-text {
   color: var(--text-primary);
-  word-break: break-word;
 }

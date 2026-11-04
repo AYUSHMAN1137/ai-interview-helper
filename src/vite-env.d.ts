@@ -7,6 +7,7 @@ interface ElectronAPI {
   toggleSpeaker: (on: boolean) => Promise<{ success: boolean; on?: boolean; error?: string }>
   triggerScreenshot: () => Promise<{ success: boolean; question?: string; error?: string }>
   triggerClipboard: () => Promise<{ success: boolean; text?: string; error?: string }>
+  triggerSendLastTranscript: () => Promise<{ success: boolean; message?: string; error?: string }>
   refreshSession: () => Promise<{ success: boolean }>
   saveSettings: (settings: any) => Promise<{ success: boolean }>
   loadSettings: () => Promise<any>
@@ -14,8 +15,12 @@ interface ElectronAPI {
   minimizeWindow: () => void
   closeWindow: () => void
   addClipboardQuestion: (text: string) => Promise<{ success: boolean }>
-  regenerateQuestion: (questionId: string, text: string, tier: string) => Promise<{ success: boolean; error?: string }>
+  regenerateQuestion: (questionId: string, text: string, tier: string, target?: string) => Promise<{ success: boolean; error?: string }>
   setOpacity: (opacity: number) => Promise<{ success: boolean; opacity?: number }>
+  setAnswerOutputMode: (mode: string) => Promise<{ success: boolean; mode?: string }>
+  listSessionRuns: () => Promise<any[]>
+  loadSessionRun: (sessionId: string) => Promise<any>
+  exportSession: (sessionId: string, format?: 'json' | 'markdown') => Promise<{ success: boolean; filePath?: string; canceled?: boolean; error?: string }>
   
   sendMicAudio: (buffer: ArrayBuffer) => void
   onStartMicCapture: (cb: () => void) => void

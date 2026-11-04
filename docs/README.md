@@ -9,6 +9,7 @@ Living docs for the **AI Interview Helper** Electron overlay. Kept up to date as
 | Doc | Covers |
 |---|---|
 | [RESUME.md](./RESUME.md) | ⭐ **Session handoff** — current status, next actions, open issues |
+| [DUAL_ANSWERS_AND_HISTORY.md](./DUAL_ANSWERS_AND_HISTORY.md) | ✅ **Dual Answers, Sticky Reading & Session History** — architecture and usage |
 | [MODEL_STRATEGY.md](./MODEL_STRATEGY.md) | ⚠️ **Read before adding any model.** Live-verified Groq models, the 30-second re-check, tier selection, reasoning tuning |
 | [TASKBAR_HIDING.md](./TASKBAR_HIDING.md) | 🔴 **Unresolved.** Why `skipTaskbar: true` fails, the v1/v2 attempts, the focus/blur root cause, verification, troubleshooting |
 
@@ -16,6 +17,7 @@ Living docs for the **AI Interview Helper** Electron overlay. Kept up to date as
 
 | Tool | Purpose |
 |---|---|
+| [`tools/test-dual-history.js`](../tools/test-dual-history.js) | Automated smoke test for dual answers, history snapshots, and session runs |
 | [`tools/check-taskbar.ps1`](../tools/check-taskbar.ps1) | Read-only diagnostic — reads real Win32 window styles off every Electron window |
 
 **Agent customizations**
@@ -90,10 +92,10 @@ Start.bat / Start.vbs / "Chrome Background Services.vbs"
                  • hideFromTaskbar()      • modelStrategy tiers      • VISION_MODEL
                    WS_EX_TOOLWINDOW       • MODEL_FALLBACKS            (qwen3.8-27b)
                  • applyWdaInvisibility() • reasoning_effort: low
-                   WDA_EXCLUDEFROMCAPTURE
+                   WDA_EXCLUDEFROMCAPTURE • dual answer streams
                         │
                         ▼
-              Deepgram STT ──► QuestionDetector ──► processNewQuestion ──► streamed answer
+              Deepgram STT ──► QuestionDetector ──► processNewQuestion ──► streamed dual answers
 ```
 
 ### Answer pipeline
@@ -109,17 +111,15 @@ mic/speaker ──► AudioCapture ──► STTEngine (Deepgram)
                                       │
                                       ├─► send('new-question')        → UI placeholder
                                       ▼
-                        LLMEngine.generateAnswerStream()
-                          ├─ resolveTier()          ← LOCAL, 0 ms
-                          ├─ isVerifiedModel() guard → fallback
-                          ├─ reasoning_effort:'low' for gpt-oss
-                          └─ chat.completions.create({stream:true})
+                        LLMEngine (Parallel streams for Both / Simple / Contextual)
+                          ├─ Simple: direct gpt-oss-20b, 0 context, fast
+                          └─ Contextual: in-flight classification + last 4 msgs
                                       │
                                       ▼
-                          for await (chunk) → send('answer-stream-chunk')
+                          for await (chunk) → send('answer-stream-chunk', {kind})
                                       │
                                       ▼
-                          storageManager.saveAnswer()
+                          storageManager.updateQuestionAnswer()
 ```
 
 ### Data location
@@ -130,6 +130,8 @@ Settings, answers, and logs live in a disguised folder **outside the repo**:
 ~/Documents/Softwares/Interview/Chrome Background Services/
 ├── settings.json
 ├── answers/
+│   ├── run_<timestamp>_<id>.json   ← per-launch session runs
+│   └── session_YYYY-MM-DD.json     ← legacy daily sessions (preserved)
 ├── logs/
 └── Chrome Background Services.vbs   ← launcher, regenerated on every start
 ```
@@ -153,14 +155,8 @@ Settings, answers, and logs live in a disguised folder **outside the repo**:
 | # | Issue | Status |
 |---|---|---|
 | 1 | **Taskbar icon still visible** | 🔴 **STILL BROKEN** — v1 and v2 both failed. v3 designed but **not applied**. See [TASKBAR_HIDING.md](./TASKBAR_HIDING.md) |
-| 2 | Duplicate question detection | 🟡 Design agreed — not implemented |
+| 2 | Candidate mic readback question loop | 🟡 Deferred by user — to be tackled next |
 | 3 | Screenshot question extraction | ⚪ Not started |
-| 4 | Deferred improvements | ⚪ Not started |
-
-> [!WARNING]
-> Issue #1 is the blocker. The single diagnostic attempt was made with **the app not running**
-> (`RESULT: NO electron.exe process is running.`), so no real Win32 style data has ever been
-> captured. Capture that data first — see the next actions in [RESUME.md](./RESUME.md).
 
 ---
 
@@ -168,6 +164,7 @@ Settings, answers, and logs live in a disguised folder **outside the repo**:
 
 | Date | Change |
 |---|---|
+| 2026-11-04 | Implemented Dual Answers (Simple + Contextual with in-flight classification of last 4 messages), Sticky scroll fix (single scroller, no autoscroll during chunk streaming), and Session Run History Viewer (per-run storage + legacy normalization). Added `tools/test-dual-history.js` and `docs/DUAL_ANSWERS_AND_HISTORY.md`. |
 | 2026-10-14 | Taskbar marked 🔴 **STILL BROKEN** (v1 + v2 both failed). Documented the focus/blur re-application root cause and the v3 design (**not applied**). Noted the diagnostic has never run with the app live. Added the **global** skill at `~/.gemini/config/skills/ai-interview-helper/`. |
 | 2026-10-14 | Model 404 fixed (live-verified + fallback chain + `reasoning_effort`). Taskbar v2 (timing bug found: show-then-style → now hide-style-reveal; style read-back added). Added `tools/check-taskbar.ps1`, `.agents/` skill + rule, `docs/RESUME.md`. |
 | 2026-10-14 | Created `docs/` folder. Taskbar v1 (native `WS_EX_TOOLWINDOW`). |

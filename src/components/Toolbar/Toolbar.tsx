@@ -1,9 +1,7 @@
 import React from 'react'
 import ScreenshotButton from './ScreenshotButton'
 import StatusIndicator from './StatusIndicator'
-import UsageTimer from './UsageTimer'
 import MicButton from './MicButton'
-import SpeakerButton from './SpeakerButton'
 import ModelSwitcher from './ModelSwitcher'
 import { useStore } from '../../store'
 import './Toolbar.css'
@@ -13,9 +11,10 @@ const Toolbar: React.FC = () => {
     openSettings,
     refreshSession,
     isDetectingQuestions,
-    scanningMessage,
     opacity,
     setOpacity,
+    currentView,
+    setCurrentView,
   } = useStore()
 
   const handleClipboard = async () => {
@@ -61,18 +60,35 @@ const Toolbar: React.FC = () => {
 
   return (
     <div className="toolbar">
-      {/* Row 1: utility buttons + status + timer */}
+      {/* Row 1: utility buttons + status */}
       <div className="toolbar-row toolbar-row-1">
         <div className="toolbar-left">
-          <button className="btn" onClick={openSettings}>
+          <button
+            className={`btn ${currentView === 'history' ? 'btn-primary' : ''}`}
+            onClick={() => setCurrentView(currentView === 'history' ? 'live' : 'history')}
+            title={currentView === 'history' ? 'Return to Live interview overlay' : 'View past interview question sessions'}
+          >
+            {currentView === 'history' ? '← Live' : '📜 History'}
+          </button>
+          <button className="btn" onClick={openSettings} title="Open Settings">
             Settings
           </button>
-          <button className="btn" onClick={handleClipboard}>
-            Clipboard
+          <button
+            className="btn"
+            onClick={handleClipboard}
+            title="Extract question from Clipboard (Shortcut: Alt+C or Ctrl+Shift+C)"
+          >
+            <span>Clipboard</span>
+            <kbd className="btn-shortcut">Alt+C</kbd>
           </button>
           <ScreenshotButton />
-          <button className="btn btn-green" onClick={handleRefresh}>
-            Refresh
+          <button
+            className="btn btn-green"
+            onClick={handleRefresh}
+            title="Reset current live session (Shortcut: Alt+R or Ctrl+Shift+R)"
+          >
+            <span>Refresh</span>
+            <kbd className="btn-shortcut">Alt+R</kbd>
           </button>
           {isDetectingQuestions && (
             <span className="detecting-text">detecting questions</span>
@@ -81,9 +97,6 @@ const Toolbar: React.FC = () => {
         <div className="toolbar-center">
           <ModelSwitcher />
           <StatusIndicator />
-        </div>
-        <div className="toolbar-right">
-          <UsageTimer />
         </div>
       </div>
 
@@ -100,17 +113,21 @@ const Toolbar: React.FC = () => {
               <button className="opacity-step-btn" onClick={handleIncreaseOpacity} title="Increase Opacity (Ctrl+↑)">+</button>
             </div>
             <span className="opacity-instruction">
-              To control opacity, press <kbd className="opacity-kbd">Ctrl+↑</kbd> / <kbd className="opacity-kbd">Ctrl+↓</kbd>
+              Opacity: <kbd className="opacity-kbd">Ctrl+↑</kbd> / <kbd className="opacity-kbd">Ctrl+↓</kbd>
             </span>
           </div>
         </div>
         <div className="toolbar-row-2-right">
           <MicButton />
-          <SpeakerButton />
-          <button className="btn btn-large" onClick={handleMinimize} title="Hide to tray (Ctrl+Shift+H to restore)">
-            Hide
+          <button
+            className="btn btn-large"
+            onClick={handleMinimize}
+            title="Hide overlay (Shortcut: Alt+H or Ctrl+Shift+H to toggle show/hide)"
+          >
+            <span>Hide</span>
+            <kbd className="btn-shortcut">Alt+H</kbd>
           </button>
-          <button className="btn btn-large btn-exit" onClick={handleClose} title="Exit">
+          <button className="btn btn-large btn-exit" onClick={handleClose} title="Exit application">
             Exit
           </button>
         </div>

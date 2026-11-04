@@ -9,7 +9,6 @@ const MicButton: React.FC = () => {
     setMicOn(newState)
     if (window.electronAPI) {
       const result = await window.electronAPI.toggleMic(newState)
-      // Use actual state returned by main process
       setMicOn(result.on ?? newState)
     }
   }
@@ -18,8 +17,10 @@ const MicButton: React.FC = () => {
     <button
       className={`toggle-btn ${isMicOn ? 'toggle-btn--on' : 'toggle-btn--off'}`}
       onClick={handleToggle}
+      title="Toggle candidate mic (Shortcut: Alt+M or Ctrl+Shift+M)"
     >
-      Mic {isMicOn ? 'ON' : 'OFF'}
+      <span>Mic {isMicOn ? 'ON' : 'OFF'}</span>
+      <kbd className="btn-shortcut">Alt+M</kbd>
     </button>
   )
 }

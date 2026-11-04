@@ -9,7 +9,6 @@ const SpeakerButton: React.FC = () => {
     setSpeakerOn(newState)
     if (window.electronAPI) {
       const result = await window.electronAPI.toggleSpeaker(newState)
-      // Use actual state returned by main process
       setSpeakerOn(result.on ?? newState)
     }
   }
@@ -18,8 +17,10 @@ const SpeakerButton: React.FC = () => {
     <button
       className={`toggle-btn ${isSpeakerOn ? 'toggle-btn--on' : 'toggle-btn--off'}`}
       onClick={handleToggle}
+      title="Toggle interviewer audio (Shortcut: Ctrl+Shift+S)"
     >
-      Spk {isSpeakerOn ? 'ON' : 'OFF'}
+      <span>Spk {isSpeakerOn ? 'ON' : 'OFF'}</span>
+      <kbd className="btn-shortcut">Ctrl+Shift+S</kbd>
     </button>
   )
 }

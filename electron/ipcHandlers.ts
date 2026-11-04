@@ -1,12 +1,57 @@
-import { ipcMain, clipboard, BrowserWindow, app } from 'electron'
+import { ipcMain, clipboard, BrowserWindow, app, dialog } from 'electron'
+import * as path from 'path'
+import * as os from 'os'
 import { AudioCaptureService } from './audioCapture'
 import { STTEngine } from './sttEngine'
 import { LLMEngine } from './llmEngine'
 import { ScreenshotService } from './screenshotCapture'
-import { UsageTracker } from './usageTracker'
 import { StorageManager } from './storageManager'
+import { UsageTracker } from './usageTracker'
 import { QuestionDetector } from './questionDetector'
-import { ModelTier } from './modelStrategy'
+import type { ModelTier } from './modelStrategy'
+import type { AnswerOutputMode } from './answerTypes'
+
+let currentMicOn = false
+
+export function isMicActive(): boolean {
+  return currentMicOn
+}
+
+export async function toggleMicAction(
+  win: BrowserWindow,
+  sttEngine: STTEngine,
+  desiredState?: boolean
+): Promise<boolean> {
+  const next = desiredState !== undefined ? desiredState : !currentMicOn
+  try {
+    if (next) {
+      const connected = await sttEngine.connectSource('mic')
+      if (!connected) {
+        console.warn('Deepgram mic connection failed — mic audio will not be transcribed')
+      }
+      currentMicOn = true
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('start-mic-capture')
+      }
+    } else {
+      currentMicOn = false
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('stop-mic-capture')
+      }
+      sttEngine.disconnectSource('mic')
+    }
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('hotkey-mic-toggle', { on: currentMicOn })
+    }
+    return currentMicOn
+  } catch (err: any) {
+    console.error('Mic toggle error:', err)
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('hotkey-mic-toggle', { on: currentMicOn })
+    }
+    return currentMicOn
+  }
+}
 
 export function registerIpcHandlers(
   win: BrowserWindow,
@@ -17,36 +62,27 @@ export function registerIpcHandlers(
   usageTracker: UsageTracker,
   storage: StorageManager,
   questionDetector: QuestionDetector,
-  processNewQuestion: (text: string, source: 'voice' | 'screenshot' | 'clipboard', opts?: { forceTier?: ModelTier }) => Promise<void>
+  processNewQuestion: (
+    text: string,
+    source: 'voice' | 'screenshot' | 'clipboard',
+    opts?: { forceTier?: ModelTier; targetKind?: 'simple' | 'contextual'; existingQuestionId?: string }
+  ) => Promise<void>,
+  setOutputMode?: (mode: AnswerOutputMode) => void,
+  getOutputMode?: () => AnswerOutputMode
 ) {
-  let micOn = false
-
   ipcMain.handle('toggle-mic', async (_event, { on }) => {
     try {
-      if (on) {
-        // Connect Deepgram mic on-demand (avoids timeout from startup connection)
-        const connected = await sttEngine.connectSource('mic')
-        if (!connected) {
-          console.warn('Deepgram mic connection failed — mic audio will not be transcribed')
-        }
-        micOn = true
-        // Signal renderer to start Web Audio mic capture
-        win.webContents.send('start-mic-capture')
-      } else {
-        micOn = false
-        win.webContents.send('stop-mic-capture')
-        sttEngine.disconnectSource('mic')
-      }
-      return { success: true, on: micOn }
+      const resultOn = await toggleMicAction(win, sttEngine, on)
+      return { success: true, on: resultOn }
     } catch (err: any) {
       console.error('Mic toggle error:', err)
-      return { success: false, error: err.message, on: false }
+      return { success: false, error: err.message, on: currentMicOn }
     }
   })
 
   // Receive mic audio chunks from renderer (Web Audio API - no SoX needed)
   ipcMain.on('mic-audio-chunk', (_event, data: any) => {
-    if (micOn) {
+    if (currentMicOn) {
       // IPC serialization may convert Buffer to Uint8Array — convert back
       const buf = Buffer.isBuffer(data) ? data : Buffer.from(data)
       sttEngine.sendAudio(buf, 'mic')
@@ -103,6 +139,19 @@ export function registerIpcHandlers(
     }
   })
 
+  ipcMain.handle('trigger-send-last-transcript', async () => {
+    try {
+      if ((global as any).sendLastTranscriptAsQuestion) {
+        await (global as any).sendLastTranscriptAsQuestion()
+        return { success: true }
+      }
+      return { success: false, message: 'sendLastTranscriptAsQuestion not ready' }
+    } catch (err: any) {
+      console.error('Send last transcript error:', err)
+      return { success: false, error: err.message }
+    }
+  })
+
   ipcMain.handle('trigger-clipboard', async () => {
     try {
       const text = clipboard.readText().trim()
@@ -128,18 +177,67 @@ export function registerIpcHandlers(
   ipcMain.handle('refresh-session', async () => {
     (global as any).__questionCounter = 0
     llmEngine.clearHistory()
+    if ((global as any).__questionDeduper) (global as any).__questionDeduper.clear()
+    if ((global as any).__logBuffer) (global as any).__logBuffer.clear()
     return { success: true }
   })
 
-  // Re-run a question with a specific tier ("Regenerate with Deep")
-  ipcMain.handle('regenerate-question', async (_event, { questionId, text, tier }) => {
+  // Re-run a question without creating duplicate entries
+  ipcMain.handle('regenerate-question', async (_event, { questionId, text, tier, target }) => {
     try {
       const validTier: ModelTier | undefined =
         tier === 'instant' || tier === 'balanced' || tier === 'deep' ? tier : undefined
-      await processNewQuestion(text, 'voice', { forceTier: validTier })
+      await processNewQuestion(text, 'voice', {
+        forceTier: validTier,
+        targetKind: target || 'contextual',
+        existingQuestionId: questionId,
+      })
       return { success: true }
     } catch (err: any) {
       console.error('Regenerate error:', err)
+      return { success: false, error: err.message }
+    }
+  })
+
+  // Output mode toggle (both / simple / contextual)
+  ipcMain.handle('set-answer-output-mode', async (_event, { mode }) => {
+    if (setOutputMode) setOutputMode(mode)
+    await storage.saveSettings({ answerOutputMode: mode })
+    return { success: true, mode }
+  })
+
+  // List past session runs for History viewer
+  ipcMain.handle('list-session-runs', async () => {
+    return await storage.listSessionRuns()
+  })
+
+  // Load questions for a selected session
+  ipcMain.handle('load-session-run', async (_event, { sessionId }) => {
+    return await storage.loadSessionRun(sessionId)
+  })
+
+  // Export session as Markdown or JSON
+  ipcMain.handle('export-session', async (_event, { sessionId, format = 'markdown' }) => {
+    try {
+      const ext = format === 'json' ? 'json' : 'md'
+      const defaultFilename = `interview_session_${sessionId}.${ext}`
+      const defaultPath = path.join(os.homedir(), 'Desktop', defaultFilename)
+
+      const { canceled, filePath } = await dialog.showSaveDialog(win, {
+        title: `Export Interview Session (${format.toUpperCase()})`,
+        defaultPath,
+        filters: format === 'json'
+          ? [{ name: 'JSON Files (*.json)', extensions: ['json'] }]
+          : [{ name: 'Markdown Files (*.md)', extensions: ['md'] }, { name: 'All Files (*.*)', extensions: ['*'] }],
+      })
+
+      if (canceled || !filePath) {
+        return { success: false, canceled: true }
+      }
+
+      return await storage.exportSession(sessionId, format, filePath)
+    } catch (err: any) {
+      console.error('Export session error:', err)
       return { success: false, error: err.message }
     }
   })
@@ -162,6 +260,9 @@ export function registerIpcHandlers(
     }
     if (settings.answerMode) {
       llmEngine.updateAnswerMode(settings.answerMode)
+    }
+    if (settings.answerOutputMode && setOutputMode) {
+      setOutputMode(settings.answerOutputMode)
     }
     if (typeof settings.windowOpacity === 'number') {
       const val = Math.min(1.0, Math.max(0.20, settings.windowOpacity))

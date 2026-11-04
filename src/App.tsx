@@ -4,6 +4,7 @@ import AnswerPanel from './components/AnswerPanel/AnswerPanel'
 import TranscriptionLogs from './components/TranscriptionLogs/TranscriptionLogs'
 import Toolbar from './components/Toolbar/Toolbar'
 import SettingsModal from './components/Settings/SettingsModal'
+import HistoryView from './components/History/HistoryView'
 import { useStore } from './store'
 import { useMicCapture } from './hooks/useMicCapture'
 import './App.css'
@@ -12,6 +13,7 @@ const App: React.FC = () => {
   // Web Audio mic capture (no SoX needed)
   useMicCapture()
   const {
+    currentView,
     settingsOpen,
     addQuestion,
     updateQuestionAnswer,
@@ -28,6 +30,7 @@ const App: React.FC = () => {
     setDeepgramApiKey,
     setModel,
     setAnswerMode,
+    setAnswerOutputMode,
     setOpacity,
     refreshSession,
   } = useStore()
@@ -43,6 +46,7 @@ const App: React.FC = () => {
         if (settings.deepgramApiKey) setDeepgramApiKey(settings.deepgramApiKey)
         if (settings.model) setModel(settings.model)
         if (settings.answerMode) setAnswerMode(settings.answerMode)
+        if (settings.answerOutputMode) setAnswerOutputMode(settings.answerOutputMode)
         if (typeof settings.windowOpacity === 'number') setOpacity(settings.windowOpacity)
       }
     }).catch(() => {})
@@ -59,9 +63,9 @@ const App: React.FC = () => {
       addQuestion(data.question)
     })
 
-    // Listen for answer stream chunks
+    // Listen for answer stream chunks (with dual kind support)
     window.electronAPI.onAnswerChunk((data: any) => {
-      updateQuestionAnswer(data.questionId, data.chunk, data.isDone)
+      updateQuestionAnswer(data.questionId, data.chunk, data.isDone, data.kind, data.error)
     })
 
     // Listen for transcript entries
@@ -109,7 +113,7 @@ const App: React.FC = () => {
       }
     })
 
-    // Local keydown for Ctrl+ArrowUp and Ctrl+ArrowDown
+    // Local keydown for Ctrl+ArrowUp/Down and Alt+ shortcuts when overlay has focus
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'Up')) {
         e.preventDefault()
@@ -123,6 +127,42 @@ const App: React.FC = () => {
         const newOp = Math.max(0.20, Math.round((current - 0.05) * 100) / 100)
         setOpacity(newOp)
         window.electronAPI.setOpacity(newOp)
+      } else if (e.altKey && !e.ctrlKey && !e.shiftKey) {
+        const key = e.key.toLowerCase()
+        if (key === 'enter' || e.code === 'Enter' || e.code === 'NumpadEnter') {
+          e.preventDefault()
+          if (window.electronAPI) {
+            window.electronAPI.triggerSendLastTranscript()
+          }
+        } else if (key === 'm') {
+          e.preventDefault()
+          const nextState = !useStore.getState().isMicOn
+          setMicOn(nextState)
+          if (window.electronAPI) {
+            window.electronAPI.toggleMic(nextState)
+          }
+        } else if (key === 's') {
+          e.preventDefault()
+          if (window.electronAPI) {
+            window.electronAPI.triggerScreenshot()
+          }
+        } else if (key === 'c') {
+          e.preventDefault()
+          if (window.electronAPI) {
+            window.electronAPI.triggerClipboard()
+          }
+        } else if (key === 'r') {
+          e.preventDefault()
+          refreshSession()
+          if (window.electronAPI) {
+            window.electronAPI.refreshSession()
+          }
+        } else if (key === 'h') {
+          e.preventDefault()
+          if (window.electronAPI) {
+            window.electronAPI.minimizeWindow()
+          }
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -166,12 +206,18 @@ const App: React.FC = () => {
   return (
     <div className="app-container">
       <div className="drag-handle" />
-      <div className="panels-container">
-        <QuestionsPanel />
-        <div className="panel-divider" />
-        <AnswerPanel />
-      </div>
-      <TranscriptionLogs />
+      {currentView === 'history' ? (
+        <HistoryView />
+      ) : (
+        <>
+          <div className="panels-container">
+            <QuestionsPanel />
+            <div className="panel-divider" />
+            <AnswerPanel />
+          </div>
+          <TranscriptionLogs />
+        </>
+      )}
       <Toolbar />
       {settingsOpen && <SettingsModal />}
     </div>

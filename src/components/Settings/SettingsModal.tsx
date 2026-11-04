@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useStore } from '../../store'
 import type { AnswerMode } from '../../../electron/modelStrategy'
+import type { AnswerOutputMode } from '../../types/question'
 import './Settings.css'
 
 const AVAILABLE_MODELS = [
@@ -17,6 +18,8 @@ const SettingsModal: React.FC = () => {
     model,
     answerMode,
     setAnswerMode,
+    answerOutputMode,
+    setAnswerOutputMode,
     opacity,
     setResume,
     setOpenaiApiKey,
@@ -31,6 +34,7 @@ const SettingsModal: React.FC = () => {
   const [localDeepgramKey, setLocalDeepgramKey] = useState(deepgramApiKey)
   const [localModel, setLocalModel] = useState(model || 'openai/gpt-oss-20b')
   const [localMode, setLocalMode] = useState<AnswerMode>(answerMode || 'auto')
+  const [localOutputMode, setLocalOutputMode] = useState<AnswerOutputMode>(answerOutputMode || 'both')
   const [localOpacity, setLocalOpacity] = useState(opacity || 0.88)
 
   useEffect(() => {
@@ -39,8 +43,9 @@ const SettingsModal: React.FC = () => {
     setLocalDeepgramKey(deepgramApiKey)
     setLocalModel(model || 'openai/gpt-oss-20b')
     setLocalMode(answerMode || 'auto')
+    setLocalOutputMode(answerOutputMode || 'both')
     setLocalOpacity(opacity || 0.88)
-  }, [resume, openaiApiKey, deepgramApiKey, model, answerMode, opacity])
+  }, [resume, openaiApiKey, deepgramApiKey, model, answerMode, answerOutputMode, opacity])
 
   const handleOpacitySliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value)
@@ -57,6 +62,7 @@ const SettingsModal: React.FC = () => {
     setDeepgramApiKey(localDeepgramKey)
     setModel(localModel)
     setAnswerMode(localMode)
+    setAnswerOutputMode(localOutputMode)
     setOpacity(localOpacity)
 
     if (window.electronAPI) {
@@ -66,6 +72,7 @@ const SettingsModal: React.FC = () => {
         deepgramApiKey: localDeepgramKey,
         model: localModel,
         answerMode: localMode,
+        answerOutputMode: localOutputMode,
         windowOpacity: localOpacity,
       })
     }
@@ -82,9 +89,26 @@ const SettingsModal: React.FC = () => {
       <div className="modal-container" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-title">Settings — AI & Assistant Controls</h2>
 
+        {/* Answer Output Mode (Dual / Simple / Contextual) */}
+        <div className="settings-section">
+          <label className="settings-label">Default Answer Sections</label>
+          <select
+            className="settings-select"
+            value={localOutputMode}
+            onChange={(e) => setLocalOutputMode(e.target.value as AnswerOutputMode)}
+          >
+            <option value="both">⚡+🧠 Both (Simple fast answer + Contextual answer in parallel)</option>
+            <option value="simple">⚡ Simple only (Direct, fast answer without past turns)</option>
+            <option value="contextual">🧠 Contextual only (Uses recent conversation background)</option>
+          </select>
+          <p className="settings-hint">
+            Can also be toggled directly on the Answer panel during an interview.
+          </p>
+        </div>
+
         {/* Answer Model Mode */}
         <div className="settings-section">
-          <label className="settings-label">Answer Model Mode</label>
+          <label className="settings-label">Contextual Model Tier Mode</label>
           <select
             className="settings-select"
             value={localMode}
@@ -143,7 +167,7 @@ const SettingsModal: React.FC = () => {
         {/* Resume Section */}
         <div className="settings-section">
           <label className="settings-label">
-            Candidate Resume (The engine speaks in first-person based on this):
+            Candidate Resume (Used for Contextual interview answers):
           </label>
           <textarea
             className="settings-textarea"

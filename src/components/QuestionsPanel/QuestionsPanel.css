@@ -1,14 +1,16 @@
 .questions-panel {
-  width: 38%;
+  width: 18%;
+  min-width: 140px;
+  max-width: 200px;
   display: flex;
   flex-direction: column;
   background: var(--bg-panel);
   border-right: 1px solid var(--border-panel);
-  min-width: 0;
+  flex-shrink: 0;
 }
 
 .panel-header {
-  padding: 8px 12px 6px;
+  padding: 6px 10px 5px;
   font-size: var(--font-size-label);
   color: #2dd4bf;
   font-weight: 600;
@@ -19,7 +21,7 @@
 .questions-list {
   flex: 1;
   overflow-y: auto;
-  padding: 4px;
+  padding: 3px;
   min-height: 0;
 }
 
@@ -27,7 +29,7 @@
   color: var(--text-secondary);
   font-size: var(--font-size-small);
   text-align: center;
-  padding: 20px 12px;
+  padding: 16px 8px;
   font-style: italic;
 }
 
@@ -35,8 +37,8 @@
 .question-item {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 4px;
+  padding: 5px 8px;
   margin: 2px 0;
   border-radius: 4px;
   cursor: pointer;
@@ -57,15 +59,15 @@
 .question-number {
   color: var(--text-blue);
   font-weight: 600;
-  font-size: var(--font-size-small);
+  font-size: 11px;
   flex-shrink: 0;
   margin-top: 1px;
 }
 
 .question-text {
-  font-size: var(--font-size-small);
+  font-size: 11px;
   color: var(--text-primary);
-  line-height: 1.4;
+  line-height: 1.35;
   word-break: break-word;
 }
 
@@ -81,5 +83,3 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
-
-/* (Selected Question styles moved to AnswerPanel.css) */

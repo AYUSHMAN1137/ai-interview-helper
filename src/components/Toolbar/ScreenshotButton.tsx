@@ -7,7 +7,7 @@ const ScreenshotButton: React.FC = () => {
   const handleClick = async () => {
     if (isScanning) return
     setScanning(true)
-    
+
     if (window.electronAPI) {
       try {
         await window.electronAPI.triggerScreenshot()
@@ -20,12 +20,20 @@ const ScreenshotButton: React.FC = () => {
 
   return (
     <button
-      className={`btn btn-green`}
+      className="btn btn-green"
       onClick={handleClick}
       disabled={isScanning}
+      title="Capture screen & extract question (Shortcut: Alt+S or Ctrl+Shift+P)"
       style={{ opacity: isScanning ? 0.7 : 1 }}
     >
-      {isScanning ? 'Scanning...' : 'Screenshot'}
+      {isScanning ? (
+        'Scanning...'
+      ) : (
+        <>
+          <span>Screenshot</span>
+          <kbd className="btn-shortcut">Alt+S</kbd>
+        </>
+      )}
     </button>
   )
 }

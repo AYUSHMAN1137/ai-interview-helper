@@ -22,7 +22,7 @@ const QuestionsPanel: React.FC = () => {
               number={q.number}
               text={q.text}
               isSelected={q.id === selectedQuestionId}
-              isStreaming={q.isStreaming}
+              isStreaming={!!q.isStreaming}
               onClick={() => selectQuestion(q.id)}
             />
           ))

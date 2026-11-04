@@ -42,15 +42,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1;
-  justify-content: center;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .toolbar-row-2-right {
@@ -64,6 +57,32 @@
   font-size: var(--font-size-small);
   animation: pulse 1.5s infinite;
   white-space: nowrap;
+}
+
+/* Shortcut badge inside buttons */
+.btn-shortcut {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.1;
+  padding: 1px 4px;
+  margin-left: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+  pointer-events: none;
+}
+
+.btn:hover .btn-shortcut,
+.btn-large:hover .btn-shortcut,
+.toggle-btn:hover .btn-shortcut {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 /* Toggle button styles (Mic/Speaker) */
@@ -201,4 +220,3 @@
   border-radius: 3px;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
 }
-

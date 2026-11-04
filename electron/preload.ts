@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleSpeaker: (on: boolean) => ipcRenderer.invoke('toggle-speaker', { on }),
   triggerScreenshot: () => ipcRenderer.invoke('trigger-screenshot'),
   triggerClipboard: () => ipcRenderer.invoke('trigger-clipboard'),
+  triggerSendLastTranscript: () => ipcRenderer.invoke('trigger-send-last-transcript'),
   refreshSession: () => ipcRenderer.invoke('refresh-session'),
   saveSettings: (settings: any) => ipcRenderer.invoke('save-settings', settings),
   loadSettings: () => ipcRenderer.invoke('load-settings'),
@@ -13,9 +14,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   closeWindow: () => ipcRenderer.invoke('close-window'),
   addClipboardQuestion: (text: string) => ipcRenderer.invoke('add-clipboard-question', { text }),
-  regenerateQuestion: (questionId: string, text: string, tier: string) =>
-    ipcRenderer.invoke('regenerate-question', { questionId, text, tier }),
+  regenerateQuestion: (questionId: string, text: string, tier: string, target?: string) =>
+    ipcRenderer.invoke('regenerate-question', { questionId, text, tier, target }),
   setOpacity: (opacity: number) => ipcRenderer.invoke('set-opacity', { opacity }),
+  setAnswerOutputMode: (mode: string) => ipcRenderer.invoke('set-answer-output-mode', { mode }),
+  listSessionRuns: () => ipcRenderer.invoke('list-session-runs'),
+  loadSessionRun: (sessionId: string) => ipcRenderer.invoke('load-session-run', { sessionId }),
+  exportSession: (sessionId: string, format: string = 'markdown') =>
+    ipcRenderer.invoke('export-session', { sessionId, format }),
 
   // Mic audio chunk (renderer → main, Web Audio API)
   sendMicAudio: (buffer: ArrayBuffer) => ipcRenderer.send('mic-audio-chunk', Buffer.from(buffer)),
