@@ -14,6 +14,7 @@ interface ElectronAPI {
   minimizeWindow: () => void
   closeWindow: () => void
   addClipboardQuestion: (text: string) => Promise<{ success: boolean }>
+  regenerateQuestion: (questionId: string, text: string, tier: string) => Promise<{ success: boolean; error?: string }>
   setOpacity: (opacity: number) => Promise<{ success: boolean; opacity?: number }>
   
   sendMicAudio: (buffer: ArrayBuffer) => void

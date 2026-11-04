@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useStore } from '../../store'
+import type { AnswerMode } from '../../../electron/modelStrategy'
 import './Settings.css'
 
 const AVAILABLE_MODELS = [
@@ -14,6 +15,8 @@ const SettingsModal: React.FC = () => {
     openaiApiKey,
     deepgramApiKey,
     model,
+    answerMode,
+    setAnswerMode,
     opacity,
     setResume,
     setOpenaiApiKey,
@@ -26,16 +29,18 @@ const SettingsModal: React.FC = () => {
   const [localResume, setLocalResume] = useState(resume)
   const [localOpenaiKey, setLocalOpenaiKey] = useState(openaiApiKey)
   const [localDeepgramKey, setLocalDeepgramKey] = useState(deepgramApiKey)
-  const [localModel, setLocalModel] = useState(model || 'openai/gpt-oss-120b')
+  const [localModel, setLocalModel] = useState(model || 'openai/gpt-oss-20b')
+  const [localMode, setLocalMode] = useState<AnswerMode>(answerMode || 'auto')
   const [localOpacity, setLocalOpacity] = useState(opacity || 0.88)
 
   useEffect(() => {
     setLocalResume(resume)
     setLocalOpenaiKey(openaiApiKey)
     setLocalDeepgramKey(deepgramApiKey)
-    setLocalModel(model || 'openai/gpt-oss-120b')
+    setLocalModel(model || 'openai/gpt-oss-20b')
+    setLocalMode(answerMode || 'auto')
     setLocalOpacity(opacity || 0.88)
-  }, [resume, openaiApiKey, deepgramApiKey, model, opacity])
+  }, [resume, openaiApiKey, deepgramApiKey, model, answerMode, opacity])
 
   const handleOpacitySliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value)
@@ -51,6 +56,7 @@ const SettingsModal: React.FC = () => {
     setOpenaiApiKey(localOpenaiKey)
     setDeepgramApiKey(localDeepgramKey)
     setModel(localModel)
+    setAnswerMode(localMode)
     setOpacity(localOpacity)
 
     if (window.electronAPI) {
@@ -59,6 +65,7 @@ const SettingsModal: React.FC = () => {
         openaiApiKey: localOpenaiKey,
         deepgramApiKey: localDeepgramKey,
         model: localModel,
+        answerMode: localMode,
         windowOpacity: localOpacity,
       })
     }
@@ -75,20 +82,22 @@ const SettingsModal: React.FC = () => {
       <div className="modal-container" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-title">Settings — AI & Assistant Controls</h2>
 
-        {/* AI Model Selection */}
+        {/* Answer Model Mode */}
         <div className="settings-section">
-          <label className="settings-label">AI Model</label>
+          <label className="settings-label">Answer Model Mode</label>
           <select
             className="settings-select"
-            value={localModel}
-            onChange={(e) => setLocalModel(e.target.value)}
+            value={localMode}
+            onChange={(e) => setLocalMode(e.target.value as AnswerMode)}
           >
-            {AVAILABLE_MODELS.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label}
-              </option>
-            ))}
+            <option value="auto">✨ Auto (smart — recommended)</option>
+            <option value="instant">⚡ Instant (gpt-oss-20b — fastest)</option>
+            <option value="balanced">⚖️ Balanced (qwen3.8-27b — technical)</option>
+            <option value="deep">🧠 Deep (gpt-oss-120b — coding/system design)</option>
           </select>
+          <p className="settings-hint">
+            Auto picks per question: conceptual → Instant, technical → Balanced, screenshots → Deep.
+          </p>
         </div>
 
         {/* Window Opacity Controller */}

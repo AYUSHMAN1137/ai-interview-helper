@@ -4,6 +4,7 @@ import StatusIndicator from './StatusIndicator'
 import UsageTimer from './UsageTimer'
 import MicButton from './MicButton'
 import SpeakerButton from './SpeakerButton'
+import ModelSwitcher from './ModelSwitcher'
 import { useStore } from '../../store'
 import './Toolbar.css'
 
@@ -78,6 +79,7 @@ const Toolbar: React.FC = () => {
           )}
         </div>
         <div className="toolbar-center">
+          <ModelSwitcher />
           <StatusIndicator />
         </div>
         <div className="toolbar-right">

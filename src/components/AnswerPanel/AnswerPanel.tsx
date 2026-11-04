@@ -16,6 +16,8 @@ const AnswerPanel: React.FC = () => {
           <AnswerDisplay
             answer={selectedQuestion.answer}
             isStreaming={selectedQuestion.isStreaming}
+            questionId={selectedQuestion.id}
+            questionText={selectedQuestion.text}
           />
         ) : (
           <div className="placeholder-text">

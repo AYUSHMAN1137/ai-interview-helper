@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   closeWindow: () => ipcRenderer.invoke('close-window'),
   addClipboardQuestion: (text: string) => ipcRenderer.invoke('add-clipboard-question', { text }),
+  regenerateQuestion: (questionId: string, text: string, tier: string) =>
+    ipcRenderer.invoke('regenerate-question', { questionId, text, tier }),
   setOpacity: (opacity: number) => ipcRenderer.invoke('set-opacity', { opacity }),
 
   // Mic audio chunk (renderer → main, Web Audio API)

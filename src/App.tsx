@@ -27,6 +27,7 @@ const App: React.FC = () => {
     setOpenaiApiKey,
     setDeepgramApiKey,
     setModel,
+    setAnswerMode,
     setOpacity,
     refreshSession,
   } = useStore()
@@ -41,6 +42,7 @@ const App: React.FC = () => {
         if (settings.openaiApiKey) setOpenaiApiKey(settings.openaiApiKey)
         if (settings.deepgramApiKey) setDeepgramApiKey(settings.deepgramApiKey)
         if (settings.model) setModel(settings.model)
+        if (settings.answerMode) setAnswerMode(settings.answerMode)
         if (typeof settings.windowOpacity === 'number') setOpacity(settings.windowOpacity)
       }
     }).catch(() => {})

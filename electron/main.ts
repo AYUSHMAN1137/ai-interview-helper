@@ -1,6 +1,9 @@
 import { app, BrowserWindow, globalShortcut, ipcMain, clipboard, Tray, Menu, nativeImage } from 'electron'
 import * as path from 'path'
-import { createMainWindow, hideFromScreenCapture } from './windowManager'
+
+// Prevent app from showing in Windows taskbar
+app.setAppUserModelId('com.ai-interview-helper.hidden')
+import { createMainWindow, hideFromScreenCapture, hideFromTaskbar } from './windowManager'
 import { registerIpcHandlers } from './ipcHandlers'
 import { STTEngine } from './sttEngine'
 import { LLMEngine } from './llmEngine'
@@ -10,6 +13,7 @@ import { QuestionDetector } from './questionDetector'
 import { AudioCaptureService } from './audioCapture'
 import { registerHotkeys } from './hotkeys'
 import { UsageTracker } from './usageTracker'
+import { getModelId, type ModelTier } from './modelStrategy'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -41,15 +45,20 @@ function loadEnvFile() {
 
 async function createTrayIcon(): Promise<Electron.NativeImage> {
   try {
+    // Prefer the real app icon; fall back to a sharp-generated square if missing
+    const iconPath = path.join(__dirname, '..', 'assets', 'icon.png')
     const fs = require('fs')
+    if (fs.existsSync(iconPath)) {
+      return nativeImage.createFromPath(iconPath)
+    }
     const sharp = require('sharp')
-    const iconPath = path.join(app.getPath('userData'), 'tray-icon.png')
-    if (!fs.existsSync(iconPath)) {
+    const generatedPath = path.join(app.getPath('userData'), 'tray-icon.png')
+    if (!fs.existsSync(generatedPath)) {
       await sharp({
         create: { width: 16, height: 16, channels: 4, background: { r: 34, g: 197, b: 94, alpha: 1 } },
-      }).png().toFile(iconPath)
+      }).png().toFile(generatedPath)
     }
-    return nativeImage.createFromPath(iconPath)
+    return nativeImage.createFromPath(generatedPath)
   } catch {
     return nativeImage.createEmpty()
   }
@@ -58,7 +67,7 @@ async function createTrayIcon(): Promise<Electron.NativeImage> {
 function setupTray() {
   createTrayIcon().then(icon => {
     tray = new Tray(icon)
-    tray.setToolTip('Chrome Background Services')
+    tray.setToolTip('AI Interview Helper')
 
     const contextMenu = Menu.buildFromTemplate([
       {
@@ -97,9 +106,12 @@ async function initializeServices() {
   const openaiKey = settings.openaiApiKey || process.env.GROQ_API_KEY || ''
   const deepgramKey = settings.deepgramApiKey || process.env.DEEPGRAM_API_KEY || ''
 
-  const model = settings.model || 'openai/gpt-oss-120b'
+  const model = settings.model || getModelId('instant')
 
   llmEngine = new LLMEngine(openaiKey, settings.resume || '', model)
+  if (settings.answerMode) {
+    llmEngine.updateAnswerMode(settings.answerMode)
+  }
   screenshotService = new ScreenshotService(openaiKey, model)
   questionDetector = new QuestionDetector()
   usageTracker = new UsageTracker(storageManager)
@@ -126,7 +138,11 @@ async function initializeServices() {
   })
 }
 
-async function processNewQuestion(text: string, source: 'voice' | 'screenshot' | 'clipboard') {
+async function processNewQuestion(
+  text: string,
+  source: 'voice' | 'screenshot' | 'clipboard',
+  opts: { forceTier?: ModelTier } = {}
+) {
   if (!mainWindow || !llmEngine || !storageManager) return
 
   const questionId = `q_${Date.now()}`
@@ -145,7 +161,7 @@ async function processNewQuestion(text: string, source: 'voice' | 'screenshot' |
   mainWindow.webContents.send('new-question', { question })
 
   try {
-    const stream = await llmEngine.generateAnswerStream(text)
+    const stream = await llmEngine.generateAnswerStream(text, { source, forceTier: opts.forceTier })
     let fullAnswer = ''
 
     for await (const chunk of stream) {
@@ -186,11 +202,43 @@ async function processNewQuestion(text: string, source: 'voice' | 'screenshot' |
   }
 }
 
+// ── Catch-all: no Electron window may ever appear in the taskbar ──────────────
+// 'browser-window-created' fires for EVERY BrowserWindow the app creates, including
+// the DevTools window and any popup a library opens. Electron's `skipTaskbar` only sets
+// WS_EX_TOOLWINDOW but never clears WS_EX_APPWINDOW (which Windows prioritises), so we
+// re-assert the native tool-window style on every window as it is created and once its
+// native handle is ready.
+app.on('browser-window-created', (_event, win) => {
+  try {
+    win.setSkipTaskbar(true)
+    hideFromTaskbar(win, 'auto')
+    win.once('ready-to-show', () => {
+      if (!win.isDestroyed()) {
+        win.setSkipTaskbar(true)
+        hideFromTaskbar(win, 'auto(ready)')
+      }
+    })
+  } catch (e: any) {
+    console.warn('[taskbar] catch-all failed:', e?.message || e)
+  }
+})
+
 app.whenReady().then(async () => {
   loadEnvFile()
   await initializeServices()
 
   mainWindow = createMainWindow()
+
+  // CRITICAL ORDERING: the window is created hidden (show: false). Apply the native
+  // tool-window styles and only THEN reveal it. If the window is visible first, Windows
+  // registers a taskbar button before we can touch the styles, and SWP_FRAMECHANGED
+  // cannot reliably remove a button that already exists.
+  mainWindow.once('ready-to-show', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return
+    hideFromTaskbar(mainWindow, 'main(ready-to-show)')
+    mainWindow.show()
+    console.log('✓ [taskbar] window revealed AFTER tool-window styles were applied')
+  })
 
   // Apply initial saved opacity
   if (storageManager) {
@@ -210,14 +258,40 @@ app.whenReady().then(async () => {
   mainWindow.webContents.on('did-finish-load', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       setTimeout(() => {
-        hideFromScreenCapture(mainWindow!)
+        if (!mainWindow || mainWindow.isDestroyed()) return
+
+        // Safety net: 'ready-to-show' can fail to fire on some transparent-window / GPU
+        // configurations. Without this the window would stay hidden forever and the app
+        // would look completely broken. Styles still go on BEFORE the reveal.
+        if (!mainWindow.isVisible()) {
+          console.warn('[taskbar] ready-to-show did not fire — revealing via fallback')
+          hideFromTaskbar(mainWindow, 'main(fallback-reveal)')
+          mainWindow.show()
+        }
+
+        hideFromScreenCapture(mainWindow)
+        // HWND is fully realised by now — re-assert tool-window style as a safety net
+        hideFromTaskbar(mainWindow, 'main(post-load)')
       }, 500) // Small delay to ensure window is fully rendered
     }
   })
 
-  // Open devtools in development
+  // DevTools opens as its OWN native top-level window and is NOT covered by the main
+  // window's skipTaskbar flag — that stray window is what shows the Electron icon in the
+  // taskbar. Intercept it and hard-hide it the moment it opens.
+  mainWindow.webContents.on('devtools-opened', () => {
+    const devToolsWC = mainWindow?.webContents?.devToolsWebContents
+    if (!devToolsWC) return
+    const devToolsWindow = BrowserWindow.fromWebContents(devToolsWC)
+    if (!devToolsWindow) return
+    devToolsWindow.setSkipTaskbar(true)
+    hideFromTaskbar(devToolsWindow, 'devtools')
+    console.log('✓ [taskbar] DevTools window hidden from taskbar')
+  })
+
+  // Open devtools in development — undocked so it does not overlay the answer panel
   if (!app.isPackaged) {
-    mainWindow.webContents.openDevTools({ mode: 'detach' })
+    mainWindow.webContents.openDevTools({ mode: 'undocked' })
   }
 
   // Register IPC handlers
@@ -272,6 +346,6 @@ app.on('will-quit', () => {
 })
 
 // Make processNewQuestion available globally for IPC handlers
-;(global as any).processNewQuestion = function(text: string, source: 'voice' | 'screenshot' | 'clipboard') {
-  return processNewQuestion(text, source)
+;(global as any).processNewQuestion = function(text: string, source: 'voice' | 'screenshot' | 'clipboard', opts: { forceTier?: ModelTier } = {}) {
+  return processNewQuestion(text, source, opts)
 }

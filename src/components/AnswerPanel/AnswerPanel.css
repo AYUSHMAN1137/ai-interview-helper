@@ -77,6 +77,52 @@ h3.md-heading { font-size: 14px; }
   50% { opacity: 0; }
 }
 
+/* Regenerate bar (bottom of answer) */
+.regen-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 8px;
+}
+
+.regen-label {
+  font-size: var(--font-size-small);
+  color: var(--text-secondary);
+}
+
+.regen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-size: var(--font-size-small);
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.regen-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.regen-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.regen-btn--deep:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
 /* Selected Question (at bottom of answer panel) */
 .selected-question {
   padding: 6px 12px;

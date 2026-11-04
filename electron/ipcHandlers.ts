@@ -6,6 +6,7 @@ import { ScreenshotService } from './screenshotCapture'
 import { UsageTracker } from './usageTracker'
 import { StorageManager } from './storageManager'
 import { QuestionDetector } from './questionDetector'
+import { ModelTier } from './modelStrategy'
 
 export function registerIpcHandlers(
   win: BrowserWindow,
@@ -16,7 +17,7 @@ export function registerIpcHandlers(
   usageTracker: UsageTracker,
   storage: StorageManager,
   questionDetector: QuestionDetector,
-  processNewQuestion: (text: string, source: 'voice' | 'screenshot' | 'clipboard') => Promise<void>
+  processNewQuestion: (text: string, source: 'voice' | 'screenshot' | 'clipboard', opts?: { forceTier?: ModelTier }) => Promise<void>
 ) {
   let micOn = false
 
@@ -80,27 +81,21 @@ export function registerIpcHandlers(
   ipcMain.handle('trigger-screenshot', async () => {
     win.webContents.send('scanning-status', { status: 'started' })
     try {
-      // desktopCapturer uses WinRT/DirectX which respects WDA_EXCLUDEFROMCAPTURE.
-      // The overlay is automatically invisible — no need to hide or set opacity.
-      const ocrText = await screenshotService.captureAndOCR()
+      // 1. Capture + resize the screen (overlay auto-excluded via WDA)
+      const { buffer } = await screenshotService.captureScreen()
 
-      if (!ocrText || ocrText.trim().length < 5) {
-        win.webContents.send('scanning-status', { status: 'done', message: 'No text detected' })
-        return { success: false, message: 'No text detected in screenshot' }
-      }
-
-      win.webContents.send('scanning-status', { status: 'processing' })
-      const question = await screenshotService.extractQuestion(ocrText)
+      // 2. Vision-first extraction (fast path) with OCR/text fallbacks
+      const question = await screenshotService.extractQuestionWithFallbacks(buffer)
       console.log('Extracted question:', question)
 
-      if (question) {
-        await processNewQuestion(question, 'screenshot')
-        win.webContents.send('scanning-status', { status: 'done' })
-        return { success: true, question }
-      } else {
+      if (!question) {
         win.webContents.send('scanning-status', { status: 'done', message: 'No question found' })
         return { success: false, message: 'No question found in screenshot' }
       }
+
+      await processNewQuestion(question, 'screenshot')
+      win.webContents.send('scanning-status', { status: 'done' })
+      return { success: true, question }
     } catch (err: any) {
       console.error('Screenshot error:', err)
       win.webContents.send('scanning-status', { status: 'error', message: err.message })
@@ -136,6 +131,19 @@ export function registerIpcHandlers(
     return { success: true }
   })
 
+  // Re-run a question with a specific tier ("Regenerate with Deep")
+  ipcMain.handle('regenerate-question', async (_event, { questionId, text, tier }) => {
+    try {
+      const validTier: ModelTier | undefined =
+        tier === 'instant' || tier === 'balanced' || tier === 'deep' ? tier : undefined
+      await processNewQuestion(text, 'voice', { forceTier: validTier })
+      return { success: true }
+    } catch (err: any) {
+      console.error('Regenerate error:', err)
+      return { success: false, error: err.message }
+    }
+  })
+
   ipcMain.handle('save-settings', async (_event, settings) => {
     await storage.saveSettings(settings)
     if (settings.resume !== undefined) {
@@ -151,6 +159,9 @@ export function registerIpcHandlers(
     if (settings.model) {
       llmEngine.updateModel(settings.model)
       screenshotService.updateModel(settings.model)
+    }
+    if (settings.answerMode) {
+      llmEngine.updateAnswerMode(settings.answerMode)
     }
     if (typeof settings.windowOpacity === 'number') {
       const val = Math.min(1.0, Math.max(0.20, settings.windowOpacity))

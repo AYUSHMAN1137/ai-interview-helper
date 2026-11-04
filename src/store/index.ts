@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { Question, TranscriptEntry } from '../types/question'
+import type { AnswerMode } from '../../electron/modelStrategy'
 
 interface AppState {
   // Questions
@@ -25,6 +26,7 @@ interface AppState {
   openaiApiKey: string
   deepgramApiKey: string
   model: string
+  answerMode: AnswerMode
   opacity: number
 
   // Usage
@@ -48,6 +50,7 @@ interface AppState {
   setOpenaiApiKey: (key: string) => void
   setDeepgramApiKey: (key: string) => void
   setModel: (model: string) => void
+  setAnswerMode: (mode: AnswerMode) => void
   setOpacity: (opacity: number) => void
   refreshSession: () => void
   updateUsage: (usedMinutes: number, formatted: string) => void
@@ -69,6 +72,7 @@ export const useStore = create<AppState>((set, get) => ({
   openaiApiKey: '',
   deepgramApiKey: '',
   model: 'openai/gpt-oss-120b',
+  answerMode: 'auto',
   opacity: 0.88,
   usageMinutes: 0,
   formattedUsage: '0h 0m',
@@ -111,6 +115,7 @@ export const useStore = create<AppState>((set, get) => ({
   setOpenaiApiKey: (key) => set({ openaiApiKey: key }),
   setDeepgramApiKey: (key) => set({ deepgramApiKey: key }),
   setModel: (model) => set({ model }),
+  setAnswerMode: (mode) => set({ answerMode: mode }),
   setOpacity: (opacity) => set({ opacity }),
 
   refreshSession: () =>

@@ -7,10 +7,23 @@ import remarkGfm from 'remark-gfm'
 interface AnswerDisplayProps {
   answer: string
   isStreaming: boolean
+  questionId?: string
+  questionText?: string
 }
 
-const AnswerDisplay: React.FC<AnswerDisplayProps> = ({ answer, isStreaming }) => {
+const AnswerDisplay: React.FC<AnswerDisplayProps> = ({ answer, isStreaming, questionId, questionText }) => {
   const containerRef = useRef<HTMLDivElement>(null)
+  const [regenerating, setRegenerating] = React.useState(false)
+
+  const handleRegenerate = async (tier: 'instant' | 'balanced' | 'deep') => {
+    if (!window.electronAPI || !questionId || !questionText) return
+    setRegenerating(true)
+    try {
+      await window.electronAPI.regenerateQuestion(questionId, questionText, tier)
+    } finally {
+      setRegenerating(false)
+    }
+  }
 
   useEffect(() => {
     // Auto-scroll to bottom while streaming
@@ -68,6 +81,35 @@ const AnswerDisplay: React.FC<AnswerDisplayProps> = ({ answer, isStreaming }) =>
       >
         {answer || ''}
       </ReactMarkdown>
+      {!isStreaming && answer && questionId && (
+        <div className="regen-bar">
+          <span className="regen-label">Regenerate:</span>
+          <button
+            className="regen-btn"
+            onClick={() => handleRegenerate('instant')}
+            disabled={regenerating}
+            title="Fast model — gpt-oss-20b"
+          >
+            ⚡ Instant
+          </button>
+          <button
+            className="regen-btn"
+            onClick={() => handleRegenerate('balanced')}
+            disabled={regenerating}
+            title="Technical model — qwen3.8-27b"
+          >
+            ⚖️ Balanced
+          </button>
+          <button
+            className="regen-btn regen-btn--deep"
+            onClick={() => handleRegenerate('deep')}
+            disabled={regenerating}
+            title="Best model — gpt-oss-120b (coding / system design)"
+          >
+            🧠 Deep
+          </button>
+        </div>
+      )}
       {isStreaming && <span className="streaming-cursor">▌</span>}
     </div>
   )

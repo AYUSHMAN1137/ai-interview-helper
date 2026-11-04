@@ -12,7 +12,7 @@
   },
   "build": {
     "appId": "com.chromebg.services",
-    "productName": "Chrome Background Services",
+    "productName": "AI Interview Helper",
     "directories": {
       "output": "release"
     },
